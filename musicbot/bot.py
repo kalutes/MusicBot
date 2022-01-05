@@ -4226,6 +4226,9 @@ class MusicBot(discord.Client):
                             "auto_paused"
                         ] = True
                         player.pause()
+                        player.playlist.clear()
+                        await self.disconnect_voice_client(before.channel.guild)
+
             elif (
                 player.voice_client.channel == before.channel
                 and player.voice_client.channel == after.channel
