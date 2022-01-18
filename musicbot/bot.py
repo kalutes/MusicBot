@@ -1775,6 +1775,8 @@ class MusicBot(discord.Client):
                             ).format(res["name"], song_url),
                         )
                         for i in res["tracks"]["items"]:
+                            playlist_length = len(player.playlist.entries)
+
                             song_url = i["name"] + " " + i["artists"][0]["name"]
                             log.debug("Processing {0}".format(song_url))
                             await self.cmd_play(
@@ -1786,6 +1788,20 @@ class MusicBot(discord.Client):
                                 leftover_args,
                                 song_url,
                             )
+
+                            # Check to see if everyone left
+                            log.debug("Members: {}".format(player.voice_client.channel.members))
+                            if len(player.voice_client.channel.members) <= 1:
+                                log.debug("Aborting playlist processing since everyone left")
+                                player.playlist.clear()
+                                await self.disconnect_voice_client(before.channel.guild)
+                                break
+
+                            # If the playlist has been cleared while we're processing, stop processing stuff
+                            if len(player.playlist.entries) < playlist_length:
+                                log.debug("Aborting playlist processing due to clear")
+                                player.playlist.clear()
+                                break
 
                         await self.safe_delete_message(procmesg)
                         return Response(
@@ -1813,7 +1829,11 @@ class MusicBot(discord.Client):
                                 "Processing playlist `{0}` (`{1}`)",
                             ).format(parts[-1], song_url),
                         )
+
                         for i in res:
+
+                            playlist_length = len(player.playlist.entries)
+                            log.debug("Playlist length {}".format(playlist_length))
 
                             song_url = (
                                 i["track"]["name"]
@@ -1830,6 +1850,20 @@ class MusicBot(discord.Client):
                                 leftover_args,
                                 song_url,
                             )
+
+                            # Check to see if everyone left
+                            log.debug("Members: {}".format(player.voice_client.channel.members))
+                            if len(player.voice_client.channel.members) <= 1:
+                                log.debug("Aborting playlist processing since everyone left")
+                                player.playlist.clear()
+                                await self.disconnect_voice_client(player.voice_client.channel.guild)
+                                break
+
+                            # If the playlist has been cleared while we're processing, stop processing stuff
+                            if len(player.playlist.entries) < playlist_length:
+                                log.debug("Aborting playlist processing due to clear")
+                                player.playlist.clear()
+                                break
 
                         await self.safe_delete_message(procmesg)
                         return Response(
